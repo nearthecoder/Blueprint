@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c0a;
+    --surface: #0d1210;
+    --surface2: #111916;
+    --border: #1a2620;
+    --border2: #243830;
+    --text: #e8f0ec;
+    --muted: #4a6458;
+    --dim: #2a3e34;
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,0.08);
+    --green-mid: rgba(0,255,136,0.15);
+    --red: #ff4466;
+    --red-dim: rgba(255,68,102,0.08);
+    --amber: #ffaa00;
+    --blue: #00aaff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; min-height: 100vh;
+    background: var(--bg);
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* HEADER */
+  header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px;
+    z-index: 100;
+    gap: 16px;
+  }
+
+  .logo {
+    font-size: 15px; font-weight: 600;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .logo-sub {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-left: 1px solid var(--border2);
+    padding-left: 16px;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .status-text {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    padding-top: 72px;
+    padding-bottom: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  /* SEARCH */
+  .search-section {
+    margin-bottom: 32px;
+    margin-top: 20px;
+  }
+
+  .search-label {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .search-row {
+    display: flex; gap: 10px;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--green);
+    outline: none;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: border-color 0.2s;
+  }
+  .search-input::placeholder {
+    color: var(--dim);
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .search-input:focus { border-color: var(--green); }
+
+  .search-btn {
+    padding: 12px 28px;
+    background: var(--green);
+    color: #080c0a;
+    border: none; border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .search-btn:hover { opacity: 0.85; }
+  .search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .quick-tickers {
+    margin-top: 10px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .qtick {
+    font-size: 11px; color: var(--muted);
+    padding: 4px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .qtick:hover { color: var(--green); border-color: var(--green); }
+
+  /* LOADING */
+  #loading {
+    display: none;
+    text-align: center;
+    padding: 60px 0;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+  .loading-bar {
+    width: 200px; height: 2px;
+    background: var(--border);
+    margin: 16px auto 0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .loading-fill {
+    height: 100%; width: 0;
+    background: var(--green);
+    animation: load 2s ease-in-out infinite;
+  }
+  @keyframes load { 0%{width:0;margin-left:0} 50%{width:100%;margin-left:0} 100%{width:0;margin-left:100%} }
+
+  /* ERROR */
+  #error-msg {
+    display: none;
+    padding: 16px 20px;
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: 3px;
+    color: var(--red);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  /* RESULTS */
+  #results { display: none; }
+
+  /* PRICE CARD */
+  .price-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .company-name {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .ticker-badge {
+    font-size: 11px; color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .ticker-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  .price-main {
+    font-size: 42px; font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .price-change {
+    font-size: 16px; font-weight: 500;
+    margin-top: 6px;
+  }
+  .price-change.up { color: var(--green); }
+  .price-change.down { color: var(--red); }
+
+  .price-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .meta-item { }
+  .meta-label {
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .meta-value {
+    font-size: 13px; color: var(--text);
+    font-weight: 500;
+  }
+
+  .analyst-box {
+    text-align: right;
+  }
+  .analyst-label {
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .analyst-rec {
+    font-size: 20px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .rec-buy { color: var(--green); }
+  .rec-hold { color: var(--amber); }
+  .rec-sell { color: var(--red); }
+
+  .target-price {
+    font-size: 13px; color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* GRID */
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  /* DATA CARD */
+  .data-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 9px; color: var(--green);
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border2);
+  }
+
+  .data-row {
+    display: flex; justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .data-row:last-child { border-bottom: none; }
+  .data-key { color: var(--muted); }
+  .data-val { color: var(--text); font-weight: 500; }
+  .data-val.green { color: var(--green); }
+  .data-val.red { color: var(--red); }
+  .data-val.amber { color: var(--amber); }
+
+  /* NEWS */
+  .news-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .news-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .news-item:last-child { border-bottom: none; }
+
+  .news-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .news-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px; color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .news-title a {
+    color: inherit; text-decoration: none;
+  }
+  .news-title a:hover { color: var(--green); }
+
+  .news-meta {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* AI ANALYSIS */
+  .analysis-card {
+    background: var(--surface);
+    border: 1px solid var(--green);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .analysis-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--green), transparent);
+  }
+
+  .analysis-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .ai-badge {
+    font-size: 9px; color: #080c0a;
+    background: var(--green);
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+
+  .analysis-title {
+    font-size: 11px; color: var(--green);
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+
+  .analysis-text {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+    color: rgba(232,240,236,0.85);
+    white-space: pre-wrap;
+  }
+
+  /* DESCRIPTION */
+  .desc-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .desc-text {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* FOOTER */
+  .terminal-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  /* WELCOME */
+  #welcome {
+    padding: 60px 0;
+    text-align: center;
+  }
+
+  .welcome-title {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .welcome-desc {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px; color: var(--dim);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto 32px;
+  }
+
+  .feature-list {
+    display: flex; gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .feature-item::before { content: '→ '; color: var(--green); }
+
+  @media (max-width: 600px) {
+    .price-card { grid-template-columns: 1fr; }
+    .analyst-box { text-align: left; }
+    .price-main { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Blueprint</div>
+  <div class="logo-sub">Finance Terminal</div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <div class="status-text">LIVE DATA</div>
+  </div>
+</header>
+
+<main>
+  <div class="search-section">
+    <span class="search-label">Enter ticker symbol</span>
+    <div class="search-row">
+      <input
+        type="text"
+        class="search-input"
+        id="ticker-input"
+        placeholder="NVDA, AAPL, VOO..."
+        maxlength="10"
+        autocomplete="off"
+        autocapitalize="characters"
+      >
+      <button class="search-btn" id="search-btn" onclick="analyze()">Analyze →</button>
+    </div>
+    <div class="quick-tickers">
+      <span class="qtick" onclick="quickSearch('NVDA')">NVDA</span>
+      <span class="qtick" onclick="quickSearch('VOO')">VOO</span>
+      <span class="qtick" onclick="quickSearch('QQQM')">QQQM</span>
+      <span class="qtick" onclick="quickSearch('AAPL')">AAPL</span>
+      <span class="qtick" onclick="quickSearch('MSFT')">MSFT</span>
+      <span class="qtick" onclick="quickSearch('GOOGL')">GOOGL</span>
+      <span class="qtick" onclick="quickSearch('META')">META</span>
+      <span class="qtick" onclick="quickSearch('TSLA')">TSLA</span>
+    </div>
+  </div>
+
+  <div id="error-msg"></div>
+  <div id="loading">
+    <div>PULLING DATA</div>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+
+  <div id="welcome">
+    <div class="welcome-title">Blueprint Finance Terminal</div>
+    <div class="welcome-desc">Real market data. AI-powered analysis. The blueprint to understanding any stock in under 60 seconds.</div>
+    <div class="feature-list">
+      <span class="feature-item">Live price & financials</span>
+      <span class="feature-item">Moat & risk analysis</span>
+      <span class="feature-item">Recent news</span>
+      <span class="feature-item">Analyst targets</span>
+    </div>
+  </div>
+
+  <div id="results">
+    <!-- Price Card -->
+    <div class="price-card" id="price-card"></div>
+
+    <!-- Data Grid -->
+    <div class="data-grid">
+      <div class="data-card" id="fundamentals-card"></div>
+      <div class="data-card" id="performance-card"></div>
+    </div>
+
+    <!-- Company Description -->
+    <div class="desc-card" id="desc-card"></div>
+
+    <!-- News -->
+    <div class="news-card" id="news-card"></div>
+
+    <!-- AI Analysis -->
+    <div class="analysis-card" id="analysis-card">
+      <div class="analysis-header">
+        <span class="ai-badge">AI</span>
+        <span class="analysis-title">Blueprint Analysis</span>
+      </div>
+      <div class="analysis-text" id="analysis-text">Running analysis...</div>
+    </div>
+
+    <div class="terminal-footer">
+      <span>BLUEPRINT FINANCE TERMINAL — NEAR INC.</span>
+      <span id="timestamp"></span>
+    </div>
+  </div>
+</main>
+
+<script>
+const input = document.getElementById('ticker-input');
+const btn = document.getElementById('search-btn');
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyze();
+});
+
+input.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z.]/g, '');
+});
+
+function quickSearch(ticker) {
+  input.value = ticker;
+  analyze();
+}
+
+function fmt(val, prefix='') {
+  if (!val || val === 'N/A') return '<span style="color:var(--dim)">N/A</span>';
+  return prefix + val;
+}
+
+function fmtMktCap(val) {
+  if (!val) return 'N/A';
+  if (val >= 1e12) return '$' + (val/1e12).toFixed(2) + 'T';
+  if (val >= 1e9) return '$' + (val/1e9).toFixed(1) + 'B';
+  if (val >= 1e6) return '$' + (val/1e6).toFixed(1) + 'M';
+  return '$' + val;
+}
+
+function recColor(rec) {
+  if (!rec || rec === 'N/A') return '';
+  const r = rec.toLowerCase();
+  if (r.includes('buy') || r.includes('strong')) return 'rec-buy';
+  if (r.includes('sell')) return 'rec-sell';
+  return 'rec-hold';
+}
+
+async function analyze() {
+  const ticker = input.value.trim().toUpperCase();
+  if (!ticker) return;
+
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+
+  try {
+    // Fetch all data in parallel
+    const [quoteRes, financialsRes, newsRes] = await Promise.all([
+      fetch(`/api/quote/${ticker}`),
+      fetch(`/api/financials/${ticker}`),
+      fetch(`/api/news/${ticker}`)
+    ]);
+
+    const quote = await quoteRes.json();
+    const financials = await financialsRes.json();
+    const newsData = await newsRes.json();
+
+    if (quote.error) throw new Error(quote.error);
+
+    const news = newsData.news || [];
+    const isUp = parseFloat(quote.changePct) >= 0;
+
+    // Price card
+    document.getElementById('price-card').innerHTML = `
+      <div>
+        <div class="company-name">${financials.name || ticker}</div>
+        <div class="ticker-badge">${ticker} · ${quote.exchange} · ${quote.currency}</div>
+        <div class="price-main">$${quote.price}</div>
+        <div class="price-change ${isUp ? 'up' : 'down'}">
+          ${isUp ? '▲' : '▼'} $${Math.abs(quote.change)} (${isUp ? '+' : ''}${quote.changePct}%) TODAY
+        </div>
+        <div class="price-meta">
+          <div class="meta-item">
+            <div class="meta-label">Day High</div>
+            <div class="meta-value">$${quote.high || 'N/A'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Day Low</div>
+            <div class="meta-value">$${quote.low || 'N/A'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Volume</div>
+            <div class="meta-value">${quote.volume || 'N/A'}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Market Cap</div>
+            <div class="meta-value">${fmtMktCap(quote.marketCap)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="analyst-box">
+        <div class="analyst-label">Analyst Consensus</div>
+        <div class="analyst-rec ${recColor(financials.recommendation)}">${(financials.recommendation || 'N/A').toUpperCase()}</div>
+        <div class="target-price">Target: $${financials.targetPrice || 'N/A'}</div>
+      </div>
+    `;
+
+    // Fundamentals card
+    document.getElementById('fundamentals-card').innerHTML = `
+      <div class="card-title">Fundamentals</div>
+      <div class="data-row"><span class="data-key">P/E Ratio</span><span class="data-val">${fmt(financials.peRatio)}</span></div>
+      <div class="data-row"><span class="data-key">Forward P/E</span><span class="data-val">${fmt(financials.forwardPE)}</span></div>
+      <div class="data-row"><span class="data-key">EPS</span><span class="data-val">${fmt(financials.eps, '$')}</span></div>
+      <div class="data-row"><span class="data-key">Revenue</span><span class="data-val">${fmt(financials.revenue)}</span></div>
+      <div class="data-row"><span class="data-key">Revenue Growth</span><span class="data-val ${parseFloat(financials.revenueGrowth) > 0 ? 'green' : 'red'}">${fmt(financials.revenueGrowth)}</span></div>
+      <div class="data-row"><span class="data-key">Gross Margin</span><span class="data-val">${fmt(financials.grossMargin)}</span></div>
+      <div class="data-row"><span class="data-key">Profit Margin</span><span class="data-val">${fmt(financials.profitMargin)}</span></div>
+      <div class="data-row"><span class="data-key">Free Cash Flow</span><span class="data-val">${fmt(financials.freeCashFlow)}</span></div>
+    `;
+
+    // Performance card
+    document.getElementById('performance-card').innerHTML = `
+      <div class="card-title">Risk & Performance</div>
+      <div class="data-row"><span class="data-key">52W High</span><span class="data-val">$${fmt(financials.fiftyTwoWeekHigh)}</span></div>
+      <div class="data-row"><span class="data-key">52W Low</span><span class="data-val">$${fmt(financials.fiftyTwoWeekLow)}</span></div>
+      <div class="data-row"><span class="data-key">Beta</span><span class="data-val ${parseFloat(financials.beta) > 1.5 ? 'amber' : ''}">${fmt(financials.beta)}</span></div>
+      <div class="data-row"><span class="data-key">ROE</span><span class="data-val">${fmt(financials.roe)}</span></div>
+      <div class="data-row"><span class="data-key">Debt/Equity</span><span class="data-val ${parseFloat(financials.debtToEquity) > 2 ? 'red' : ''}">${fmt(financials.debtToEquity)}</span></div>
+      <div class="data-row"><span class="data-key">Short Ratio</span><span class="data-val">${fmt(financials.shortRatio)}</span></div>
+      <div class="data-row"><span class="data-key">Sector</span><span class="data-val">${fmt(financials.sector)}</span></div>
+      <div class="data-row"><span class="data-key">Industry</span><span class="data-val">${fmt(financials.industry)}</span></div>
+    `;
+
+    // Description
+    if (financials.description && financials.description !== 'N/A') {
+      document.getElementById('desc-card').innerHTML = `
+        <div class="card-title">About</div>
+        <div class="desc-text">${financials.description}</div>
+      `;
+    } else {
+      document.getElementById('desc-card').style.display = 'none';
+    }
+
+    // News
+    if (news.length > 0) {
+      document.getElementById('news-card').innerHTML = `
+        <div class="card-title">Recent News</div>
+        ${news.map(n => `
+          <div class="news-item">
+            <div class="news-dot"></div>
+            <div>
+              <div class="news-title"><a href="${n.link}" target="_blank">${n.title}</a></div>
+              <div class="news-meta">${n.publisher} · ${n.time}</div>
+            </div>
+          </div>
+        `).join('')}
+      `;
+    } else {
+      document.getElementById('news-card').style.display = 'none';
+    }
+
+    // Timestamp
+    document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+    // Show results
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('analysis-text').textContent = 'Running AI analysis...';
+
+    // Now run AI analysis
+    const analysisRes = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, quote, financials, news })
+    });
+    const analysisData = await analysisRes.json();
+    document.getElementById('analysis-text').textContent = analysisData.analysis || 'Analysis unavailable.';
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = `Error: ${err.message}. Check the ticker and try again.`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Analyze →';
+}
+</script>
+</body>
+</html>
